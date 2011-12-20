@@ -63,7 +63,8 @@ class CelestialObject(coo.observation):
 		print "RA: %s" % self.getRADEC()[0]
 		print "DEC: %s" % self.getRADEC()[1]
 		print "EQUINOX: %s" % self.getRADEC()[2]
-		print "TRIGGERTIME: %s" % self.getTriggerTime()
+		print "TRIGGERTIME: %s JD" % self.getTriggerTime()
+		print "\t\t", (self.jd2skycalcstruct(self.getTriggerTime()))
 		print ""
 		print "Location Information"
 		print "--------------------"
@@ -89,7 +90,7 @@ class CelestialObject(coo.observation):
 	#
 	# Set
 	#
-	def setTriggerTime(self, TriggerTime):
+	def setTRIGGER(self, TriggerTime):
 		self._TriggerTime = TriggerTime
 	
 	def setNightLength(self, NightLength):
@@ -340,29 +341,19 @@ class CelestialObject(coo.observation):
 			else:
 				observableFlag = False
 			
-			# Trigger delay, i.e. can only trigger VLT upto 4 hours after the trigger
-			#print "Time: %s, triggertime: %s" % (self.jd2skycalcstruct(jd=Hourtime), self.jd2skycalcstruct(jd=triggertime))
-			timeDiff = Hourtime - triggertime
-			
-			if timeDiff >= 0 and timeDiff < triggerdelay:
-				afterTrigger = True
-			else:
-				afterTrigger = False
-			
-			if observableFlag and afterTrigger:
+		
+			if observableFlag:
 				# This means the time is consequential and observable
 				altitudeArray = numpy.append(altitudeArray, Altitude)
 				hourtimeArray = numpy.append(hourtimeArray, Hourtime)
-				appendFlag = True
-			
-			elif appendFlag:
-				print "Appending", timeDiff
+			else:
 				# This means we need a new array
 				fullVisibilityArray.append( [ altitudeArray, hourtimeArray ] )
 				altitudeArray = numpy.array([])
 				hourtimeArray = numpy.array([])
-				appendFlag = False
-
+				
+		# Incase the observable flag is never hit
+		fullVisibilityArray.append( [ altitudeArray, hourtimeArray ] )
 
 
 		return fullVisibilityArray
@@ -375,7 +366,7 @@ class CelestialObject(coo.observation):
 		fullVisibilityArray = self.computeNightVisibility(intime=intime, telescopelimit=telescopelimit, \
 								  triggerdelay=triggerdelay, triggertime=triggertime \
 								 )
-      
+           
 		fig = plt.figure(self.getFigure())
 		ax = fig.add_subplot(111)
 		# Plot to output using matplotlib
