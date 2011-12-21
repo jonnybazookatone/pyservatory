@@ -63,8 +63,8 @@ class CelestialObject(coo.observation):
 		print "RA: %s" % self.getRADEC()[0]
 		print "DEC: %s" % self.getRADEC()[1]
 		print "EQUINOX: %s" % self.getRADEC()[2]
-		print "TRIGGERTIME: %s JD" % self.getTriggerTime()
-		print "\t\t", (self.jd2skycalcstruct(self.getTriggerTime()))
+		print "TRIGGERTIME: %s JD" % self.getTRIGGERTIME()
+		print "\t\t", (self.jd2skycalcstruct(self.getTRIGGERTIME()))
 		print ""
 		print "Location Information"
 		print "--------------------"
@@ -128,7 +128,7 @@ class CelestialObject(coo.observation):
 	# 
 	# Get
 	#
-	def getTriggerTime(self):
+	def getTRIGGERTIME(self):
 		return self._TriggerTime
 	
 	def getFigure(self):
@@ -188,7 +188,7 @@ class CelestialObject(coo.observation):
 	
 		# Set the times
 		if intime == "NOW":
-			ut = time.gmtime(time.time())[:6]
+			ut = time.gmtime(time.time()+12/24.)[:6]
 			self._OBJECTWRAPPER.setut(ut)
 		else:
 			# IMPORTANT - PLEASE CHECK THE FORMAT OF THE TIME INPUT FOR THIS CALL
@@ -198,13 +198,29 @@ class CelestialObject(coo.observation):
 		# Calculates twilight tims etc (.jdsunset, .jdevetwi, ....)
 		self._OBJECTWRAPPER.computesky()
 		self._OBJECTWRAPPER.computesunmoon()
-		
+		print "Original", self.jd2skycalcstruct(self._OBJECTWRAPPER.jd)
+#		print self.jd2skycalcstruct(self._OBJECTWRAPPER.jdsunset)
+
+		# It takes the date NOW and makes this the date in the NIGHT
+		offset = 0
+                while self._OBJECTWRAPPER.jdsunrise < self._OBJECTWRAPPER.jd:
+			
+			tmptime = self.jd2skycalcstruct(self._OBJECTWRAPPER.jd + offset/24.)
+			self._OBJECTWRAPPER.setut(tmptime)
+			self._OBJECTWRAPPER.computesky()
+			self._OBJECTWRAPPER.computesunmoon()
+			print "Modified:", self.jd2skycalcstruct(self._OBJECTWRAPPER.jd)
+			
+			# Reset the jd to current time
+			self._OBJECTWRAPPER.setut(ut)
+			offset += 1
+
 		# Collate the important times
 		self.setSunSetEnd(self._OBJECTWRAPPER.caldat(jd_override=self._OBJECTWRAPPER.jdsunset))
 		self.setEveningTwilightEnd(self._OBJECTWRAPPER.caldat(jd_override=self._OBJECTWRAPPER.jdevetwi))
 		self.setMorningTwilightStart(self._OBJECTWRAPPER.caldat(jd_override=self._OBJECTWRAPPER.jdmorntwi))
 		self.setSunRiseStart(self._OBJECTWRAPPER.caldat(jd_override=self._OBJECTWRAPPER.jdsunrise))
-		
+
 		#sunri = datetime.datetime(int(sunrise[0]),int(sunrise[1]),int(sunrise[2]),int(sunrise[3]),int(sunrise[4]),int(sunrise[5]))
 		#sunse = datetime.datetime(int(sunset[0]),int(sunset[1]),int(sunset[2]),int(sunset[3]),int(sunset[4]),int(sunset[5]))
 		
@@ -354,7 +370,6 @@ class CelestialObject(coo.observation):
 				
 		# Incase the observable flag is never hit
 		fullVisibilityArray.append( [ altitudeArray, hourtimeArray ] )
-
 
 		return fullVisibilityArray
 		
