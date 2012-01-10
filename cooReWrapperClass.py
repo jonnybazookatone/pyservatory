@@ -17,6 +17,8 @@ import time
 import sys
 import numpy
 import datetime
+import logging
+import os
 import matplotlib.pyplot as plt
 
 import cooclasses as coo
@@ -56,36 +58,71 @@ class CelestialObject(coo.observation):
 	#
 	# Print
 	#
-	def printInfo(self):
-		print "Celestial Object"
-		print "----------------"
-		print "Name: %s" % self.getName()
-		print "RA: %s" % self.getRADEC()[0]
-		print "DEC: %s" % self.getRADEC()[1]
-		print "EQUINOX: %s" % self.getRADEC()[2]
-		print "TRIGGERTIME: %s JD" % self.getTRIGGERTIME()
-		print "\t\t", (self.jd2skycalcstruct(self.getTRIGGERTIME()))
-		print ""
-		print "Location Information"
-		print "--------------------"
-		
-		temp = self.getSunSetEnd()
-		print "Sunset:\t\t\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5])
-		
-		temp = self.getEveningTwilightEnd()
-		print "EveningTwilight:\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5]) 
-		
-		temp = self.getMorningTwilightStart()
-		print "MorningTwilight:\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5])
-		
-		temp = self.getSunRiseStart()
-		print "Sunrise:\t\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5])
-		
-		temp = str(datetime.timedelta(seconds=self.getNightLength())).split(":")
-		print "NightLength (Nautical): %s hours %s minutes %s seconds" % (temp[0], temp[1], temp[2])
-		
-		temp = str(datetime.timedelta(seconds=self.getANightLength())).split(":")
-		print "NightLength (Astronomical): %s hours %s minutes %s seconds" % (temp[0], temp[1], temp[2])
+	def printInfo(self, NoLogger=False):
+		if not NoLogger:
+		  
+			print "Celestial Object"
+			print "----------------"
+			print "Name: %s" % self.getName()
+			print "RA: %s" % self.getRADEC()[0]
+			print "DEC: %s" % self.getRADEC()[1]
+			print "EQUINOX: %s" % self.getRADEC()[2]
+			print "TRIGGERTIME: %s JD" % self.getTRIGGERTIME()
+			print "\t\t", (self.jd2skycalcstruct(self.getTRIGGERTIME()))
+			print ""
+			print "Location Information"
+			print "--------------------"
+			
+			temp = self.getSunSetEnd()
+			print "Sunset:\t\t\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5])
+			
+			temp = self.getEveningTwilightEnd()
+			print "EveningTwilight:\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5]) 
+			
+			temp = self.getMorningTwilightStart()
+			print "MorningTwilight:\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5])
+			
+			temp = self.getSunRiseStart()
+			print "Sunrise:\t\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5])
+			
+			temp = str(datetime.timedelta(seconds=self.getNightLength())).split(":")
+			print "NightLength (Nautical): %s hours %s minutes %s seconds" % (temp[0], temp[1], temp[2])
+			
+			temp = str(datetime.timedelta(seconds=self.getANightLength())).split(":")
+			print "NightLength (Astronomical): %s hours %s minutes %s seconds" % (temp[0], temp[1], temp[2])
+		else:
+			# Logging
+			logfmt = '%(levelname)s:  %(message)s\t(%(asctime)s)'
+			datefmt= '%m/%d/%Y %I:%M:%S %p'
+			formatter = logging.Formatter(fmt=logfmt,datefmt=datefmt)
+			logger = logging.getLogger('__main__')
+			logging.root.setLevel(logging.DEBUG)
+
+			if not os.path.isdir("logs"): os.mkdir("logs")
+			fh = logging.FileHandler(filename='logs/%s_obs2.log' % NoLogger) #file handler
+			fh.setFormatter(formatter)
+			#logger.addHandler(ch)
+			logger.addHandler(fh)
+
+			logger.info("Name: %s" % self.getName())
+			logger.info("RA: %s" % self.getRADEC()[0])
+			logger.info("DEC: %s" % self.getRADEC()[1])
+			logger.info("EQUINOX: %s" % self.getRADEC()[2])
+			logger.info("TRIGGERTIME: %s JD" % self.getTRIGGERTIME())
+			logger.info("%s-%s-%s %s:%s:%s" % (self.jd2skycalcstruct(self.getTRIGGERTIME())))
+			logger.info("Location Information")
+			temp = self.getSunSetEnd()
+			logger.info("Sunset:\t\t\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5]))	
+			temp = self.getEveningTwilightEnd()
+			logger.info("EveningTwilight:\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5])) 
+			temp = self.getMorningTwilightStart()
+			logger.info("MorningTwilight:\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5]))
+			temp = self.getSunRiseStart()
+			logger.info("Sunrise:\t\t %s-%s-%s\t%s:%s:%d UT" % (temp[0], temp[1], temp[2], temp[3], temp[4], temp[5]))
+			temp = str(datetime.timedelta(seconds=self.getNightLength())).split(":")
+			logger.info("NightLength (Nautical): %s hours %s minutes %s seconds" % (temp[0], temp[1], temp[2]))
+			temp = str(datetime.timedelta(seconds=self.getANightLength())).split(":")
+			logger.info("NightLength (Astronomical): %s hours %s minutes %s seconds" % (temp[0], temp[1], temp[2]))
 
 	#
 	# Set
